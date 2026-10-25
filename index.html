@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<title>Йога</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='%23e64980'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #0b1020;
+    --panel: #121a2e;
+    --panel-2: #1a2440;
+    --line: #26304a;
+    --text: #e6e9f2;
+    --muted: #8b93a7;
+    --weekend: #151e36;
+    --home: #e64980;
+    --morning: #94d82d;
+    --evening: #4dabf7;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  body { padding: 20px 16px 96px; }
+  .wrap { max-width: 1200px; margin: 0 auto; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  h1 { font-size: 24px; margin: 0; }
+  h2 { font-size: 17px; margin: 0; }
+
+  .top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+  .top-date { color: var(--muted); font-size: 14px; }
+
+  /* Карточки серий */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; align-items: start; margin-bottom: 20px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--c); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .card-author { color: var(--muted); font-size: 13px; }
+  .progress { height: 6px; background: var(--panel-2); border-radius: 3px; overflow: hidden; }
+  .progress > i { display: block; height: 100%; background: var(--c); }
+  .progress-label { margin-top: 6px; font-size: 13px; color: var(--muted); }
+  .next-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .next-title { font-size: 19px; font-weight: 650; margin-top: 2px; }
+  .next-meta { font-size: 14px; color: var(--muted); }
+  .actions { display: flex; gap: 8px; }
+  .btn { flex: 1; min-height: 48px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; color: var(--text); font-weight: 600; }
+  .btn-primary { background: var(--c); border-color: var(--c); color: var(--bg); }
+
+  details > summary { cursor: pointer; color: var(--muted); font-size: 14px; list-style: none; padding: 4px 0; }
+  details > summary::-webkit-details-marker { display: none; }
+  details > summary::after { content: " ▾"; }
+  details[open] > summary::after { content: " ▴"; }
+  .lessons { list-style: none; margin: 8px 0 0; padding: 0; max-height: 420px; overflow-y: auto; }
+  .lesson { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); }
+  .check { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 2px solid #3a4560; background: none; padding: 0; display: grid; place-items: center; font-weight: 700; color: var(--bg); }
+  .lesson.done .check { background: var(--c); border-color: var(--c); }
+  .lesson-body { flex: 1; min-width: 0; }
+  .lesson-title { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lesson.is-next .lesson-title { font-weight: 700; }
+  .lesson.done .lesson-title { color: var(--muted); }
+  .lesson-meta { font-size: 12px; color: var(--muted); }
+  .play { flex: none; width: 38px; height: 38px; border-radius: 8px; border: 1px solid var(--line); display: grid; place-items: center; color: var(--muted); text-decoration: none; font-size: 13px; }
+
+  /* Сетка привычек */
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; overflow-x: auto; }
+  .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .nav { display: flex; gap: 6px; }
+  .nav button { width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); }
+  .nav button:disabled { opacity: .3; cursor: default; }
+
+  .habit-grid { display: grid; grid-template-columns: var(--label) repeat(var(--days), minmax(0, 1fr)); }
+  .habit-grid.month { --label: 110px; --row: 36px; --dot: 22px; --dot-font: 10px; }
+  .habit-grid.week  { --label: 84px;  --row: 52px; --dot: 34px; --dot-font: 13px; }
+  .weekend { background-color: var(--weekend); }
+  .head { text-align: center; padding: 4px 0 6px; font-size: 11px; color: var(--muted); }
+  .head b { display: block; font-size: 13px; font-weight: 500; color: var(--text); }
+  .head.is-today b, .head.is-today span { color: #fff; font-weight: 700; }
+  .row-label { display: flex; align-items: center; gap: 8px; font-size: 14px; white-space: nowrap; overflow: hidden; padding-right: 8px; }
+  .swatch { flex: none; width: 8px; height: 8px; border-radius: 50%; }
+  .cell { position: relative; height: var(--row); border: 0; padding: 0; background-color: transparent; display: grid; place-items: center; }
+  .cell.weekend { background-color: var(--weekend); }
+  .cell:disabled { cursor: default; }
+  .cell:disabled .dot { opacity: .3; }
+  .cell.join::after { content: ""; position: absolute; left: 50%; width: 100%; top: 50%; height: calc(var(--dot) * .5); transform: translateY(-50%); background: var(--c); }
+  .dot { position: relative; z-index: 1; width: var(--dot); height: var(--dot); border-radius: 50%; border: 1.5px solid #3a4560; display: grid; place-items: center; font-size: var(--dot-font); font-weight: 700; color: var(--bg); }
+  .dot.filled { background: var(--c); border-color: var(--c); }
+  .dot.today { border-color: #cfd5e3; }
+  .dot.filled.today { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px #cfd5e3; }
+  .count { text-align: center; font-size: 12px; color: var(--muted); padding: 6px 0; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 16px; }
+  .stat { background: var(--panel-2); border-radius: 10px; padding: 12px 14px; }
+  .stat-value { font-size: 22px; font-weight: 700; }
+  .stat-label { font-size: 13px; color: var(--muted); }
+
+  .footer { display: flex; gap: 8px; justify-content: center; margin-top: 24px; }
+  .btn-small { border: 1px solid var(--line); background: none; border-radius: 8px; padding: 8px 14px; font-size: 14px; color: var(--muted); }
+
+  .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); width: max-content; max-width: calc(100% - 32px); background: var(--text); color: var(--bg); border-radius: 10px; padding: 10px 10px 10px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.45); font-size: 15px; }
+  .toast[hidden] { display: none; }
+  .toast button { border: 0; background: none; color: #1864ab; font-weight: 700; padding: 6px 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Йога</h1>
+    <span class="top-date" id="today"></span>
+  </header>
+
+  <section class="cards" id="cards"></section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2 id="period-title"></h2>
+      <div class="nav">
+        <button data-action="prev" aria-label="Назад">‹</button>
+        <button data-action="next" id="next-btn" aria-label="Вперёд">›</button>
+      </div>
+    </div>
+    <div class="habit-grid" id="grid"></div>
+    <div class="stats" id="stats"></div>
+  </section>
+
+  <footer class="footer">
+    <button class="btn-small" data-action="export">Экспорт отметок</button>
+    <button class="btn-small" data-action="import">Импорт</button>
+    <input type="file" id="import-file" accept=".json,application/json" hidden>
+  </footer>
+</div>
+
+<div class="toast" id="toast" role="status" hidden>
+  <span id="toast-text"></span>
+  <button id="toast-undo">Отменить</button>
+</div>
+
+<script>
+// ===== Данные: [id видео, номер дня (null = бонус), название, длительность] =====
+const SERIES = [
+  { id: 'home', name: 'HOME', author: 'Yoga With Adriene', color: 'var(--home)', lessons: [
+    ['KWBfQjuwp4E', 0, 'Welcome Home', '6:08'],
+    ['--jhKVdZOJM', 1, 'Recognize', '43:11'],
+    ['UcZ3O1e0ejA', 2, 'Intend', '28:16'],
+    ['ejDUxMbsjOo', 3, 'Awaken', '25:59'],
+    ['8PO95Jy8LUQ', 4, 'Activate', '22:21'],
+    ['NVeNMX8WDeQ', 5, 'Soften', '26:12'],
+    ['qIWOSQZAvTo', 6, 'Ignite', '25:32'],
+    ['iQKrWQB_Mi4', 7, 'Stretch', '25:48'],
+    ['b5fxInaetEQ', 8, 'Heal', '26:29'],
+    ['sT5OAAYPHkc', 9, 'Inquire', '26:58'],
+    ['VPMqn8OJii8', 10, 'Ground', '18:04'],
+    ['m0PAyp7QM1M', 11, 'Dig', '21:04'],
+    ['E_Xxqv_tBgU', 12, 'Nurture', '22:00'],
+    ['9DlVaq_-KjA', 13, 'Grow', '18:08'],
+    ['A2I-G651IQg', 14, 'Return', '27:01'],
+    ['aU0KYsCTbyM', 15, 'Reset', '24:43'],
+    ['8KrY1ePvguw', 16, 'Savor', '22:05'],
+    ['LGEMzfXfj-g', 17, 'Synchronize', '29:51'],
+    ['79gRqVTtTK0', 18, 'Believe', '27:36'],
+    ['cQQvsEUlhfM', 19, 'Balance', '31:02'],
+    ['Dh5oLHetZ1Y', 20, 'Still', '23:08'],
+    ['O8BlybmA9SU', 21, 'Boost', '25:43'],
+    ['mdsZzKK19Ko', 22, 'Stir', '32:45'],
+    ['-1jGG62K0Dk', 23, 'Focus', '20:26'],
+    ['jQPraKYoH54', 24, 'Uplift', '16:04'],
+    ['ZZ7ID_-8OkY', 25, 'Unwind', '18:03'],
+    ['O0gD1v8ob-s', 26, 'Keep', '22:12'],
+    ['tYfg3x9oFgo', 27, 'Integrate', '26:23'],
+    ['Lnvt4jj9Ajg', 28, 'Nourish', '17:55'],
+    ['xAc-c7-suRc', 29, 'Intuit', '26:18'],
+    ['4VSqbSCcvuU', 30, 'Journey', '41:50'],
+  ]},
+  { id: 'morning', name: 'Утро', author: 'Yoga with Kassandra', color: 'var(--morning)', lessons: [
+    ['NeEMs38YaBY', 0, 'Вступление', '6:02'],
+    ['JyaM87ecKd0', 1, 'Для начинающих', '13:41'],
+    ['BwlSjg6ESdc', 2, 'Проснуться, всё тело', '12:38'],
+    ['jKTCrLZqErk', 3, 'Растяжка на всё тело', '13:33'],
+    ['oJBTw9tvh_s', 4, 'Шея и плечи', '12:42'],
+    ['Zg3bnk5gDwE', 5, 'Флоу на всё тело', '12:08'],
+    ['EoX3q0GQ_Xk', 6, 'Рассвет, энергия', '11:45'],
+    ['K_8bQOXl46o', 7, 'От тревоги и стресса', '13:18'],
+    ['xvifIMQJk5Y', 8, 'Растяжка всего тела', '10:37'],
+    ['dJzAeONDeLI', 9, 'Лучшая утренняя', '14:19'],
+    ['SEOy2n_uarc', 10, 'Шея и верх спины', '12:35'],
+    ['7cK5YMsmLnM', 11, 'Заряд на день', '13:00'],
+    ['CyPXEwywzFs', 12, 'Полная растяжка', '10:44'],
+    ['qCClhfxwy1k', 13, 'Детокс и антистресс', '10:47'],
+    ['Xg_EbPALVZ0', 14, 'Поясница', '12:31'],
+    ['TcYbudqvGjY', 15, 'Рассвет, всё тело', '12:41'],
+    ['Gv-5ojvsxis', 16, 'Мягко, от боли', '11:06'],
+    ['gKqAtjGFhKA', 17, 'Сила: руки и кор', '12:45'],
+    ['PKGsJx7zf5Y', 18, 'Гибкость', '12:13'],
+    ['rBfdsyk8UK0', 19, 'Бёдра и поясница', '11:51'],
+    ['7EfrAScEpBU', 20, 'Хорошее самочувствие', '13:23'],
+    ['Mog-jsjnePI', 21, 'Гибкость, всё тело', '12:15'],
+    ['x5oOWAEZeT0', 22, 'Растяжка для энергии', '12:32'],
+    ['neFgA144o7c', 23, 'Уставшие ноги', '13:42'],
+    ['VCAwwX3WiA0', 24, 'Глубокая растяжка', '10:46'],
+    ['dW6lS8HBFG0', 25, 'Плечи: сила и растяжка', '11:13'],
+    ['TRNVNAuJtkU', 26, 'Флоу на всё тело', '12:11'],
+    ['p9gy8spCz7M', 27, 'Спина', '11:15'],
+    ['btyof-7xSkk', 28, 'Старт дня', '12:10'],
+    ['shsP9mMQwh8', 29, 'Растяжка для энергии', '13:48'],
+    ['VJOILX6pjgE', 30, 'Средний уровень, всё тело', '14:54'],
+    ['ZizK2yBnncM', null, 'Медитация с аффирмациями', '7:41'],
+  ]},
+  { id: 'evening', name: 'Вечер', author: 'Yoga with Kassandra', color: 'var(--evening)', lessons: [
+    ['hyFB2QRgXwE', 0, 'Вступление', '6:40'],
+    ['P295KQMmkh8', 1, 'Гибкость и расслабление', '17:03'],
+    ['rD3B5q9FMH0', 2, 'Инь для начинающих', '18:56'],
+    ['DiX--eyFZTA', 3, 'Растяжка перед сном', '15:50'],
+    ['8w3TiyEC-DU', 4, 'Йога для сна', '17:06'],
+    ['AZ-o2ak-zW8', 5, 'Расслабление перед сном', '17:49'],
+    ['-Nd3UaLTxJ8', 6, 'Инь для уставших мышц', '17:22'],
+    ['u7rd78aPtZM', 7, 'Для начинающих', '14:58'],
+    ['Be2fVNWq6Uw', 8, 'Гибкость, всё тело', '15:15'],
+    ['3NHI7BW8_v0', 9, 'Бёдра и задняя поверхность', '17:04'],
+    ['wrQadkdoe9I', 10, 'Инь для начинающих', '16:47'],
+    ['4W9q0tJdnFc', 11, 'Гибкость всего тела', '15:05'],
+    ['Ba2NiKbI9DY', 12, 'Бёдра и поясница', '15:00'],
+    ['CyxYtdEX2aM', 13, 'Гибкость', '15:57'],
+    ['xoAvp68A2m0', 14, 'Расслабляющий инь', '17:13'],
+    ['KZgokMUrq08', 15, 'Флоу перед сном', '15:19'],
+    ['5mGBw5wlyHY', 16, 'Гибкость', '15:44'],
+    ['meYaItkP3Lk', 17, 'Глубокая растяжка', '14:51'],
+    ['QgSKOyXwJTc', 18, 'Инь перед сном', '18:07'],
+    ['fXayji0vLTI', 19, 'Вечерний флоу', '15:23'],
+    ['vlksFiaWJe0', 20, 'Расслабление перед сном', '17:45'],
+    ['y2SbPDGBxGY', 21, 'Бёдра и поясница', '15:56'],
+    ['iqa4FxGmVxA', 22, 'Инь для сна', '16:19'],
+    ['18374DQy1BA', 23, 'Всё тело перед сном', '14:33'],
+    ['yb-PT-5CVPk', 24, 'Замедлиться', '14:37'],
+    ['kS0xDanGfmU', 25, 'Расслабление всего тела', '15:44'],
+    ['7yiV2mYBAy4', 26, 'Инь на гибкость', '19:11'],
+    ['ggns7vm6ULI', 27, 'Уставшие мышцы', '17:10'],
+    ['pt6apYT8b7Y', 28, 'Гибкость и расслабление', '15:49'],
+    ['j5Y9Ay6xeXA', 29, 'Растяжка перед сном', '15:51'],
+    ['duyd-RJeqcU', 30, 'Расслабляющий инь', '19:20'],
+    ['0ItYBQK2yHw', null, 'Медитация с аффирмациями', '7:21'],
+  ]},
+];
+
+// Стартовое состояние: HOME Day 0 и Day 1 уже пройдены (без даты)
+const DEFAULT_STATE = { done: { 'KWBfQjuwp4E': null, '--jhKVdZOJM': null } };
+const STORAGE_KEY = 'yoga-tracker-v1';
+const WEEKDAYS = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+const isAndroid = /Android/i.test(navigator.userAgent);
+
+SERIES.forEach(s => {
+  s.lessons = s.lessons.map(([id, day, title, dur]) => ({ id, day, title, dur, series: s }));
+});
+const SERIES_BY_ID = Object.fromEntries(SERIES.map(s => [s.id, s]));
+const LESSONS = new Map(SERIES.flatMap(s => s.lessons.map(l => [l.id, l])));
+
+// ===== Хранилище =====
+let state = loadState();
+
+function loadState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (saved && typeof saved.done === 'object' && saved.done !== null) return saved;
+  } catch (e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_STATE));
+}
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+// ===== Хелперы =====
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseYmd = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const todayStr = () => ymd(new Date());
+const durMin = s => s.split(':').map(Number).reduce((acc, n) => acc * 60 + n, 0) / 60;
+const fmtMin = s => `${Math.round(durMin(s))} мин`;
+const fmtShort = s => new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'short' }).format(parseYmd(s));
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
+const plural = (n, forms) => {
+  const a = Math.abs(n) % 100, b = a % 10;
+  if (a > 10 && a < 20) return forms[2];
+  if (b > 1 && b < 5) return forms[1];
+  if (b === 1) return forms[0];
+  return forms[2];
+};
+
+const lessonLabel = l => (l.day === null ? 'Бонус' : `Day ${l.day}`);
+const isDone = id => Object.prototype.hasOwnProperty.call(state.done, id);
+const mainLessons = s => s.lessons.filter(l => l.day !== null);
+const nextOf = s => mainLessons(s).find(l => !isDone(l.id));
+const doneOn = (s, date) => s.lessons.filter(l => state.done[l.id] === date);
+
+function videoUrl(id) {
+  const web = `https://www.youtube.com/watch?v=${id}`;
+  if (!isAndroid) return web;
+  // На Android открываем сразу в приложении YouTube, минуя браузер
+  return `intent://www.youtube.com/watch?v=${id}#Intent;scheme=https;package=com.google.android.youtube;S.browser_fallback_url=${encodeURIComponent(web)};end`;
+}
+
+// Меняет отметку и возвращает функцию отмены
+function setDone(id, value) {
+  const had = isDone(id);
+  const prev = state.done[id];
+  if (value === undefined) delete state.done[id];
+  else state.done[id] = value;
+  saveState();
+  render();
+  return () => {
+    if (had) state.done[id] = prev;
+    else delete state.done[id];
+    saveState();
+    render();
+  };
+}
+
+// ===== Тост с отменой =====
+const toastEl = document.getElementById('toast');
+const toastText = document.getElementById('toast-text');
+const toastUndoBtn = document.getElementById('toast-undo');
+let toastTimer = null;
+let toastUndo = null;
+
+function toast(text, undo) {
+  toastText.textContent = text;
+  toastUndo = undo || null;
+  toastUndoBtn.hidden = !undo;
+  toastEl.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toastEl.hidden = true; }, 5000);
+}
+toastUndoBtn.addEventListener('click', () => {
+  if (toastUndo) toastUndo();
+  toastUndo = null;
+  toastEl.hidden = true;
+});
+
+// ===== Карточки =====
+const cardsEl = document.getElementById('cards');
+const openLists = new Set();
+
+document.addEventListener('toggle', e => {
+  const d = e.target;
+  if (d.matches && d.matches('details[data-series]')) {
+    if (d.open) openLists.add(d.dataset.series);
+    else openLists.delete(d.dataset.series);
+  }
+}, true);
+
+function renderCards() {
+  // Сохраняем прокрутку списков, чтобы после отметки не прыгало наверх
+  const scrolls = {};
+  cardsEl.querySelectorAll('details[data-series]').forEach(d => {
+    scrolls[d.dataset.series] = d.querySelector('.lessons').scrollTop;
+  });
+
+  cardsEl.innerHTML = SERIES.map(s => {
+    const main = mainLessons(s);
+    const doneCount = main.filter(l => isDone(l.id)).length;
+    const next = nextOf(s);
+    const pct = Math.round(doneCount / main.length * 100);
+
+    const nextBlock = next ? `
+      <div>
+        <div class="next-label">Следующий урок</div>
+        <div class="next-title">Day ${next.day} · ${esc(next.title)}</div>
+        <div class="next-meta">${fmtMin(next.dur)}</div>
+      </div>
+      <div class="actions">
+        <a class="btn btn-primary" href="${videoUrl(next.id)}">▶ Начать</a>
+        <button class="btn" data-action="done-next" data-series="${s.id}">✓ Сделала</button>
+      </div>` : `<div class="next-title">Серия пройдена</div>`;
+
+    const list = s.lessons.map(l => {
+      const done = isDone(l.id);
+      const date = state.done[l.id];
+      const meta = [fmtMin(l.dur)];
+      if (done) meta.push(date ? `✓ ${fmtShort(date)}` : '✓ раньше');
+      return `
+        <li class="lesson ${done ? 'done' : ''} ${next && l.id === next.id ? 'is-next' : ''}">
+          <button class="check" data-action="toggle-lesson" data-id="${l.id}" aria-label="${done ? 'Снять отметку' : 'Отметить'}">${done ? '✓' : ''}</button>
+          <div class="lesson-body">
+            <div class="lesson-title">${lessonLabel(l)} · ${esc(l.title)}</div>
+            <div class="lesson-meta">${meta.join(' · ')}</div>
+          </div>
+          <a class="play" href="${videoUrl(l.id)}" aria-label="Открыть на YouTube">▶</a>
+        </li>`;
+    }).join('');
+
+    return `
+      <article class="card" style="--c:${s.color}">
+        <div class="card-head">
+          <h2>${s.name}</h2>
+          <span class="card-author">${s.author}</span>
+        </div>
+        <div>
+          <div class="progress"><i style="width:${pct}%"></i></div>
+          <div class="progress-label">${doneCount} из ${main.length}</div>
+        </div>
+        ${nextBlock}
+        <details data-series="${s.id}" ${openLists.has(s.id) ? 'open' : ''}>
+          <summary>Все уроки</summary>
+          <ul class="lessons">${list}</ul>
+        </details>
+      </article>`;
+  }).join('');
+
+  cardsEl.querySelectorAll('details[data-series]').forEach(d => {
+    const top = scrolls[d.dataset.series];
+    if (top) d.querySelector('.lessons').scrollTop = top;
+  });
+}
+
+// ===== Сетка: месяц на широком экране, неделя на узком =====
+const gridEl = document.getElementById('grid');
+const statsEl = document.getElementById('stats');
+const titleEl = document.getElementById('period-title');
+const nextBtn = document.getElementById('next-btn');
+const wideQuery = matchMedia('(min-width: 1000px)');
+let mode = wideQuery.matches ? 'month' : 'week';
+let anchor = new Date(); // месяц: любой день месяца; неделя: последний день недели
+
+wideQuery.addEventListener('change', () => {
+  mode = wideQuery.matches ? 'month' : 'week';
+  anchor = new Date();
+  renderGrid();
+});
+
+function periodDays() {
+  const days = [];
+  if (mode === 'month') {
+    const y = anchor.getFullYear(), m = anchor.getMonth();
+    const n = new Date(y, m + 1, 0).getDate();
+    for (let i = 1; i <= n; i++) days.push(new Date(y, m, i));
+  } else {
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() - i);
+      days.push(d);
+    }
+  }
+  return days;
+}
+
+function shiftPeriod(dir) {
+  if (mode === 'month') {
+    anchor = new Date(anchor.getFullYear(), anchor.getMonth() + dir, 1);
+  } else {
+    anchor = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() + 7 * dir);
+    if (ymd(anchor) > todayStr()) anchor = new Date();
+  }
+  renderGrid();
+}
+
+function renderGrid() {
+  const days = periodDays();
+  const ds = days.map(ymd);
+  const today = todayStr();
+  const isWeekend = d => d.getDay() === 0 || d.getDay() === 6;
+
+  if (mode === 'month') {
+    const month = new Intl.DateTimeFormat('ru', { month: 'long' }).format(anchor);
+    titleEl.textContent = `${capitalize(month)} ${anchor.getFullYear()}`;
+  } else {
+    const f = new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'long' });
+    titleEl.textContent = `${f.format(days[0])} – ${f.format(days[days.length - 1])}`;
+  }
+  nextBtn.disabled = ds[ds.length - 1] >= today;
+
+  gridEl.className = `habit-grid ${mode}`;
+  gridEl.style.setProperty('--days', days.length);
+
+  let html = '<div></div>';
+  days.forEach((d, i) => {
+    html += `<div class="head ${isWeekend(d) ? 'weekend' : ''} ${ds[i] === today ? 'is-today' : ''}"><b>${d.getDate()}</b><span>${WEEKDAYS[d.getDay()]}</span></div>`;
+  });
+
+  SERIES.forEach(s => {
+    html += `<div class="row-label"><span class="swatch" style="background:${s.color}"></span>${s.name}</div>`;
+    const perDay = ds.map(date => doneOn(s, date));
+    days.forEach((d, i) => {
+      const items = perDay[i];
+      const filled = items.length > 0;
+      const join = filled && i < days.length - 1 && perDay[i + 1].length > 0;
+      const last = items[items.length - 1];
+      const label = filled ? (last.day === null ? '•' : last.day) : '';
+      const future = ds[i] > today;
+      html += `
+        <button class="cell ${isWeekend(d) ? 'weekend' : ''} ${join ? 'join' : ''}" style="--c:${s.color}"
+          data-action="cell" data-series="${s.id}" data-date="${ds[i]}" ${future ? 'disabled' : ''}
+          aria-label="${s.name}, ${ds[i]}${filled ? ', сделано' : ''}">
+          <span class="dot ${filled ? 'filled' : ''} ${ds[i] === today ? 'today' : ''}">${label}</span>
+        </button>`;
+    });
+  });
+
+  html += '<div></div>';
+  days.forEach((d, i) => {
+    const n = SERIES.reduce((acc, s) => acc + doneOn(s, ds[i]).length, 0);
+    html += `<div class="count ${isWeekend(d) ? 'weekend' : ''}">${n || ''}</div>`;
+  });
+
+  gridEl.innerHTML = html;
+
+  // Статистика за показанный период
+  const from = ds[0], to = ds[ds.length - 1];
+  const inPeriod = [...LESSONS.values()].filter(l => {
+    const d = state.done[l.id];
+    return d && d >= from && d <= to;
+  });
+  const count = inPeriod.length;
+  const minutes = Math.round(inPeriod.reduce((acc, l) => acc + durMin(l.dur), 0));
+  const activeDays = new Set(inPeriod.map(l => state.done[l.id])).size;
+  const top = SERIES
+    .map(s => [s, inPeriod.filter(l => l.series === s).length])
+    .sort((a, b) => b[1] - a[1])[0];
+
+  statsEl.innerHTML = `
+    <div class="stat"><div class="stat-value">${count}</div><div class="stat-label">${plural(count, ['практика', 'практики', 'практик'])}</div></div>
+    <div class="stat"><div class="stat-value">${minutes}</div><div class="stat-label">${plural(minutes, ['минута', 'минуты', 'минут'])} на коврике</div></div>
+    <div class="stat"><div class="stat-value">${activeDays}</div><div class="stat-label">${plural(activeDays, ['день', 'дня', 'дней'])} с практикой</div></div>
+    <div class="stat"><div class="stat-value">${top[1] > 0 ? top[0].name : '—'}</div><div class="stat-label">чаще всего</div></div>`;
+}
+
+// ===== Общий рендер =====
+function render() {
+  document.getElementById('today').textContent =
+    new Intl.DateTimeFormat('ru', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
+  renderCards();
+  renderGrid();
+}
+
+// ===== Действия =====
+const importInput = document.getElementById('import-file');
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const { action } = el.dataset;
+
+  if (action === 'done-next') {
+    const s = SERIES_BY_ID[el.dataset.series];
+    const next = nextOf(s);
+    if (!next) return;
+    const undo = setDone(next.id, todayStr());
+    toast(`${s.name} · Day ${next.day} — отмечено`, undo);
+  }
+
+  if (action === 'toggle-lesson') {
+    const l = LESSONS.get(el.dataset.id);
+    if (isDone(l.id)) {
+      const undo = setDone(l.id, undefined);
+      toast(`Отметка снята: ${l.series.name} · ${lessonLabel(l)}`, undo);
+    } else {
+      const undo = setDone(l.id, todayStr());
+      toast(`${l.series.name} · ${lessonLabel(l)} — отмечено`, undo);
+    }
+  }
+
+  if (action === 'cell') {
+    const s = SERIES_BY_ID[el.dataset.series];
+    const date = el.dataset.date;
+    const items = doneOn(s, date);
+    if (items.length) {
+      const last = items[items.length - 1];
+      const undo = setDone(last.id, undefined);
+      toast(`Отметка снята: ${s.name} · ${lessonLabel(last)}`, undo);
+    } else {
+      const next = nextOf(s);
+      if (!next) { toast(`${s.name}: серия уже пройдена`); return; }
+      const undo = setDone(next.id, date);
+      toast(`${s.name} · Day ${next.day} — ${fmtShort(date)}`, undo);
+    }
+  }
+
+  if (action === 'prev') shiftPeriod(-1);
+  if (action === 'next') shiftPeriod(1);
+
+  if (action === 'export') {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `yoga-${todayStr()}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  if (action === 'import') importInput.click();
+});
+
+importInput.addEventListener('change', async () => {
+  const file = importInput.files[0];
+  importInput.value = '';
+  if (!file) return;
+  try {
+    const data = JSON.parse(await file.text());
+    if (!data || typeof data.done !== 'object' || data.done === null) throw new Error('bad format');
+    if (!confirm('Заменить текущие отметки данными из файла?')) return;
+    state = { done: data.done };
+    saveState();
+    render();
+    toast('Отметки загружены');
+  } catch (err) {
+    toast('Не получилось прочитать файл');
+  }
+});
+
+// Перерисовываем при возвращении на вкладку: могла смениться дата
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) render();
+});
+
+render();
+</script>
+</body>
+</html>
