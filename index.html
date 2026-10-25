@@ -26,9 +26,13 @@
   button { font: inherit; color: inherit; cursor: pointer; }
   h1 { font-size: 24px; margin: 0; }
   h2 { font-size: 17px; margin: 0; }
+  code { font-size: .9em; background: var(--panel-2); padding: 1px 5px; border-radius: 4px; }
 
-  .top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+  /* Шапка */
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
   .top-date { color: var(--muted); font-size: 14px; }
+  .sync-status { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 8px 14px; font-size: 13px; color: var(--muted); }
+  .sync-status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--tone, #8b93a7); }
 
   /* Карточки серий */
   .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; align-items: start; margin-bottom: 20px; }
@@ -44,6 +48,9 @@
   .actions { display: flex; gap: 8px; }
   .btn { flex: 1; min-height: 48px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; color: var(--text); font-weight: 600; }
   .btn-primary { background: var(--c); border-color: var(--c); color: var(--bg); }
+  .btn-accent { background: var(--evening); border-color: var(--evening); color: var(--bg); }
+  .btn:disabled { opacity: .6; cursor: default; }
+  .btn-small { border: 1px solid var(--line); background: none; border-radius: 8px; padding: 10px 14px; font-size: 14px; color: var(--muted); }
 
   details > summary { cursor: pointer; color: var(--muted); font-size: 14px; list-style: none; padding: 4px 0; }
   details > summary::-webkit-details-marker { display: none; }
@@ -76,11 +83,15 @@
   .head.is-today b, .head.is-today span { color: #fff; font-weight: 700; }
   .row-label { display: flex; align-items: center; gap: 8px; font-size: 14px; white-space: nowrap; overflow: hidden; padding-right: 8px; }
   .swatch { flex: none; width: 8px; height: 8px; border-radius: 50%; }
-  .cell { position: relative; height: var(--row); border: 0; padding: 0; background-color: transparent; display: grid; place-items: center; }
+  .cell { position: relative; isolation: isolate; height: var(--row); border: 0; padding: 0; background-color: transparent; display: grid; place-items: center; }
   .cell.weekend { background-color: var(--weekend); }
   .cell:disabled { cursor: default; }
   .cell:disabled .dot { opacity: .3; }
-  .cell.join::after { content: ""; position: absolute; left: 50%; width: 100%; top: 50%; height: calc(var(--dot) * .5); transform: translateY(-50%); background: var(--c); }
+  /* Каждая ячейка рисует только свои половинки перемычки */
+  .cell.join-l::before,
+  .cell.join-r::after { content: ""; position: absolute; top: 50%; height: calc(var(--dot) * .5); transform: translateY(-50%); background: var(--c); }
+  .cell.join-l::before { left: 0; right: 50%; }
+  .cell.join-r::after  { left: 50%; right: 0; }
   .dot { position: relative; z-index: 1; width: var(--dot); height: var(--dot); border-radius: 50%; border: 1.5px solid #3a4560; display: grid; place-items: center; font-size: var(--dot-font); font-weight: 700; color: var(--bg); }
   .dot.filled { background: var(--c); border-color: var(--c); }
   .dot.today { border-color: #cfd5e3; }
@@ -92,19 +103,30 @@
   .stat-value { font-size: 22px; font-weight: 700; }
   .stat-label { font-size: 13px; color: var(--muted); }
 
-  .footer { display: flex; gap: 8px; justify-content: center; margin-top: 24px; }
-  .btn-small { border: 1px solid var(--line); background: none; border-radius: 8px; padding: 8px 14px; font-size: 14px; color: var(--muted); }
-
-  .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); width: max-content; max-width: calc(100% - 32px); background: var(--text); color: var(--bg); border-radius: 10px; padding: 10px 10px 10px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.45); font-size: 15px; }
+  /* Тост */
+  .toast { position: fixed; z-index: 100; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: max-content; max-width: calc(100% - 32px); background: var(--text); color: var(--bg); border-radius: 10px; padding: 10px 10px 10px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.45); font-size: 15px; }
   .toast[hidden] { display: none; }
   .toast button { border: 0; background: none; color: #1864ab; font-weight: 700; padding: 6px 8px; }
+
+  /* Окно синхронизации */
+  dialog { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 14px; padding: 20px; width: min(440px, calc(100% - 32px)); }
+  dialog::backdrop { background: rgba(5, 8, 18, .7); }
+  .dialog-text { font-size: 14px; color: var(--muted); margin: 10px 0; }
+  .dialog-text a { color: var(--evening); }
+  .dialog-error { font-size: 14px; color: #ff8787; margin: 8px 0 0; }
+  .input { width: 100%; margin-top: 6px; padding: 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); font: inherit; font-size: 16px; }
+  .dialog-actions { display: flex; gap: 8px; justify-content: flex-end; align-items: center; flex-wrap: wrap; margin-top: 16px; }
+  .dialog-actions .btn { flex: none; padding: 0 18px; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="top">
-    <h1>Йога</h1>
-    <span class="top-date" id="today"></span>
+    <div>
+      <h1>Йога</h1>
+      <div class="top-date" id="today"></div>
+    </div>
+    <button class="sync-status" id="sync-status" data-action="sync-dialog"></button>
   </header>
 
   <section class="cards" id="cards"></section>
@@ -120,18 +142,14 @@
     <div class="habit-grid" id="grid"></div>
     <div class="stats" id="stats"></div>
   </section>
-
-  <footer class="footer">
-    <button class="btn-small" data-action="export">Экспорт отметок</button>
-    <button class="btn-small" data-action="import">Импорт</button>
-    <input type="file" id="import-file" accept=".json,application/json" hidden>
-  </footer>
 </div>
 
 <div class="toast" id="toast" role="status" hidden>
   <span id="toast-text"></span>
   <button id="toast-undo">Отменить</button>
 </div>
+
+<dialog id="sync-dialog"></dialog>
 
 <script>
 // ===== Данные: [id видео, номер дня (null = бонус), название, длительность] =====
@@ -240,8 +258,11 @@ const SERIES = [
 ];
 
 // Стартовое состояние: HOME Day 0 и Day 1 уже пройдены (без даты)
-const DEFAULT_STATE = { done: { 'KWBfQjuwp4E': null, '--jhKVdZOJM': null } };
+const DEFAULT_STATE = { updatedAt: 0, done: { 'KWBfQjuwp4E': null, '--jhKVdZOJM': null } };
 const STORAGE_KEY = 'yoga-tracker-v1';
+const SYNC_KEY = 'yoga-sync-v1';
+const PROMPT_KEY = 'yoga-sync-prompted';
+const GIST_FILE = 'yoga-tracker.json';
 const WEEKDAYS = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
 const isAndroid = /Android/i.test(navigator.userAgent);
 
@@ -251,13 +272,15 @@ SERIES.forEach(s => {
 const SERIES_BY_ID = Object.fromEntries(SERIES.map(s => [s.id, s]));
 const LESSONS = new Map(SERIES.flatMap(s => s.lessons.map(l => [l.id, l])));
 
-// ===== Хранилище =====
+// ===== Локальное хранилище =====
 let state = loadState();
 
 function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (saved && typeof saved.done === 'object' && saved.done !== null) return saved;
+    if (saved && typeof saved.done === 'object' && saved.done !== null) {
+      return { updatedAt: saved.updatedAt || 0, done: saved.done };
+    }
   } catch (e) {}
   return JSON.parse(JSON.stringify(DEFAULT_STATE));
 }
@@ -273,6 +296,7 @@ const todayStr = () => ymd(new Date());
 const durMin = s => s.split(':').map(Number).reduce((acc, n) => acc * 60 + n, 0) / 60;
 const fmtMin = s => `${Math.round(durMin(s))} мин`;
 const fmtShort = s => new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'short' }).format(parseYmd(s));
+const fmtTime = d => new Intl.DateTimeFormat('ru', { hour: '2-digit', minute: '2-digit' }).format(d);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
 const plural = (n, forms) => {
@@ -296,20 +320,214 @@ function videoUrl(id) {
   return `intent://www.youtube.com/watch?v=${id}#Intent;scheme=https;package=com.google.android.youtube;S.browser_fallback_url=${encodeURIComponent(web)};end`;
 }
 
+// Любое изменение: штамп времени, сохранение, перерисовка, отправка в облако
+function commit() {
+  state.updatedAt = Date.now();
+  saveState();
+  render();
+  schedulePush();
+}
+
 // Меняет отметку и возвращает функцию отмены
 function setDone(id, value) {
   const had = isDone(id);
   const prev = state.done[id];
   if (value === undefined) delete state.done[id];
   else state.done[id] = value;
-  saveState();
-  render();
+  commit();
   return () => {
     if (had) state.done[id] = prev;
     else delete state.done[id];
-    saveState();
-    render();
+    commit();
   };
+}
+
+// ===== Синхронизация с GitHub Gist =====
+const STATUS = {
+  off:     ['Подключить облако', '#8b93a7'],
+  syncing: ['Сохраняю…', '#8b93a7'],
+  ok:      ['Сохранено в облаке', '#69db7c'],
+  offline: ['Нет связи, повторю позже', '#ffc078'],
+  auth:    ['Токен не подходит', '#ff8787'],
+  missing: ['Gist не найден', '#ff8787'],
+};
+const statusBtn = document.getElementById('sync-status');
+const dialog = document.getElementById('sync-dialog');
+
+let sync = loadSync();
+let syncStatus = sync ? 'syncing' : 'off';
+let lastSyncAt = null;
+let pushTimer = null;
+let retryTimer = null;
+let pushing = false;
+
+function loadSync() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SYNC_KEY));
+    if (s && s.token && s.gistId) return s;
+  } catch (e) {}
+  return null;
+}
+function saveSync() {
+  if (sync) localStorage.setItem(SYNC_KEY, JSON.stringify(sync));
+  else localStorage.removeItem(SYNC_KEY);
+}
+
+function setStatus(s) {
+  syncStatus = s;
+  if (s === 'ok') lastSyncAt = new Date();
+  const [label, tone] = STATUS[s];
+  statusBtn.textContent = label;
+  statusBtn.style.setProperty('--tone', tone);
+  if (dialog.open && sync) renderSyncDialog();
+}
+
+async function gh(path, { method = 'GET', body, token } = {}) {
+  const res = await fetch('https://api.github.com' + path, {
+    method,
+    cache: 'no-store',
+    headers: {
+      'Accept': 'application/vnd.github+json',
+      'Authorization': `Bearer ${token || sync.token}`,
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    const err = new Error(`GitHub ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
+const serialize = () => JSON.stringify({ updatedAt: state.updatedAt, done: state.done }, null, 2);
+
+function handleSyncError(err) {
+  if (err.status === 401 || err.status === 403) { setStatus('auth'); return; }
+  if (err.status === 404) { setStatus('missing'); return; }
+  setStatus('offline');
+  clearTimeout(retryTimer);
+  retryTimer = setTimeout(pull, 30000);
+}
+
+function schedulePush() {
+  if (!sync) return;
+  setStatus('syncing');
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(push, 1500);
+}
+
+async function push() {
+  clearTimeout(pushTimer);
+  pushTimer = null;
+  if (!sync || pushing) return;
+  pushing = true;
+  setStatus('syncing');
+  const sentAt = state.updatedAt;
+  let ok = false;
+  try {
+    await gh(`/gists/${sync.gistId}`, { method: 'PATCH', body: { files: { [GIST_FILE]: { content: serialize() } } } });
+    ok = true;
+    setStatus('ok');
+  } catch (err) {
+    handleSyncError(err);
+  } finally {
+    pushing = false;
+    // Если пока отправляли, что-то поменялось — отправим ещё раз
+    if (ok && state.updatedAt !== sentAt) schedulePush();
+  }
+}
+
+async function pull() {
+  if (!sync) return;
+  clearTimeout(retryTimer);
+  try {
+    if (!pushing) setStatus('syncing');
+    const gist = await gh(`/gists/${sync.gistId}`);
+    const file = gist.files && gist.files[GIST_FILE];
+    const remote = file ? JSON.parse(file.content) : null;
+    const remoteAt = (remote && remote.updatedAt) || 0;
+
+    if (remote && typeof remote.done === 'object' && remoteAt > state.updatedAt) {
+      // В облаке версия новее — берём её
+      state = { updatedAt: remoteAt, done: remote.done };
+      saveState();
+      render();
+      setStatus('ok');
+    } else if (!remote || state.updatedAt > remoteAt) {
+      // Локальная версия новее — отправляем
+      await push();
+    } else {
+      setStatus('ok');
+    }
+  } catch (err) {
+    handleSyncError(err);
+  }
+}
+
+async function connect(token) {
+  // Проверяем токен и ищем уже существующий gist (например, созданный с другого устройства)
+  const gists = await gh('/gists?per_page=100', { token });
+  const found = gists.find(g => g.files && g.files[GIST_FILE]);
+  let gistId;
+  if (found) {
+    gistId = found.id;
+  } else {
+    const created = await gh('/gists', {
+      method: 'POST',
+      token,
+      body: { description: 'Йога-трекер: отметки', public: false, files: { [GIST_FILE]: { content: serialize() } } },
+    });
+    gistId = created.id;
+  }
+  sync = { token, gistId };
+  saveSync();
+  await pull();
+}
+
+function renderSyncDialog(errorText = '') {
+  if (!sync) {
+    dialog.innerHTML = `
+      <h2>Синхронизация с GitHub</h2>
+      <p class="dialog-text">Отметки будут автоматически сохраняться в приватный Gist. Вставь токен с правом <code>gist</code> — он сохранится только в этом браузере.</p>
+      <input class="input" id="token-input" type="password" placeholder="ghp_…" autocomplete="off" spellcheck="false">
+      ${errorText ? `<p class="dialog-error">${esc(errorText)}</p>` : ''}
+      <div class="dialog-actions">
+        <button class="btn-small" data-action="dialog-close">Позже</button>
+        <button class="btn btn-accent" data-action="sync-connect">Подключить</button>
+      </div>`;
+  } else {
+    dialog.innerHTML = `
+      <h2>Синхронизация с GitHub</h2>
+      <p class="dialog-text">Статус: ${STATUS[syncStatus][0]}${lastSyncAt ? ` · последняя синхронизация в ${fmtTime(lastSyncAt)}` : ''}</p>
+      <p class="dialog-text"><a href="https://gist.github.com/${esc(sync.gistId)}" target="_blank" rel="noopener">Открыть Gist с историей версий</a></p>
+      <div class="dialog-actions">
+        <button class="btn-small" data-action="sync-disconnect">Отключить</button>
+        <button class="btn-small" data-action="sync-now">Синхронизировать</button>
+        <button class="btn btn-accent" data-action="dialog-close">Готово</button>
+      </div>`;
+  }
+}
+
+function openSyncDialog() {
+  renderSyncDialog();
+  dialog.showModal();
+}
+
+async function handleConnect(button) {
+  const token = document.getElementById('token-input').value.trim();
+  if (!token) { renderSyncDialog('Вставь токен'); return; }
+  button.disabled = true;
+  button.textContent = 'Подключаю…';
+  try {
+    await connect(token);
+    renderSyncDialog();
+  } catch (err) {
+    renderSyncDialog(err.status === 401 || err.status === 403
+      ? 'Токен не подошёл. Проверь, что он скопирован целиком и у него есть право gist.'
+      : 'Не получилось связаться с GitHub. Проверь интернет и попробуй ещё раз.');
+  }
 }
 
 // ===== Тост с отменой =====
@@ -432,8 +650,7 @@ function periodDays() {
     for (let i = 1; i <= n; i++) days.push(new Date(y, m, i));
   } else {
     for (let i = 6; i >= 0; i--) {
-      const d = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() - i);
-      days.push(d);
+      days.push(new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() - i));
     }
   }
   return days;
@@ -478,12 +695,13 @@ function renderGrid() {
     days.forEach((d, i) => {
       const items = perDay[i];
       const filled = items.length > 0;
-      const join = filled && i < days.length - 1 && perDay[i + 1].length > 0;
+      const joinL = filled && i > 0 && perDay[i - 1].length > 0;
+      const joinR = filled && i < days.length - 1 && perDay[i + 1].length > 0;
       const last = items[items.length - 1];
       const label = filled ? (last.day === null ? '•' : last.day) : '';
       const future = ds[i] > today;
       html += `
-        <button class="cell ${isWeekend(d) ? 'weekend' : ''} ${join ? 'join' : ''}" style="--c:${s.color}"
+        <button class="cell ${isWeekend(d) ? 'weekend' : ''} ${joinL ? 'join-l' : ''} ${joinR ? 'join-r' : ''}" style="--c:${s.color}"
           data-action="cell" data-series="${s.id}" data-date="${ds[i]}" ${future ? 'disabled' : ''}
           aria-label="${s.name}, ${ds[i]}${filled ? ', сделано' : ''}">
           <span class="dot ${filled ? 'filled' : ''} ${ds[i] === today ? 'today' : ''}">${label}</span>
@@ -528,8 +746,6 @@ function render() {
 }
 
 // ===== Действия =====
-const importInput = document.getElementById('import-file');
-
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-action]');
   if (!el) return;
@@ -573,41 +789,41 @@ document.addEventListener('click', e => {
   if (action === 'prev') shiftPeriod(-1);
   if (action === 'next') shiftPeriod(1);
 
-  if (action === 'export') {
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `yoga-${todayStr()}.json`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  }
-
-  if (action === 'import') importInput.click();
-});
-
-importInput.addEventListener('change', async () => {
-  const file = importInput.files[0];
-  importInput.value = '';
-  if (!file) return;
-  try {
-    const data = JSON.parse(await file.text());
-    if (!data || typeof data.done !== 'object' || data.done === null) throw new Error('bad format');
-    if (!confirm('Заменить текущие отметки данными из файла?')) return;
-    state = { done: data.done };
-    saveState();
-    render();
-    toast('Отметки загружены');
-  } catch (err) {
-    toast('Не получилось прочитать файл');
+  if (action === 'sync-dialog') openSyncDialog();
+  if (action === 'dialog-close') dialog.close();
+  if (action === 'sync-connect') handleConnect(el);
+  if (action === 'sync-now') pull();
+  if (action === 'sync-disconnect') {
+    if (!confirm('Отключить синхронизацию на этом устройстве? Данные в Gist останутся.')) return;
+    sync = null;
+    saveSync();
+    clearTimeout(pushTimer);
+    clearTimeout(retryTimer);
+    setStatus('off');
+    renderSyncDialog();
   }
 });
 
-// Перерисовываем при возвращении на вкладку: могла смениться дата
+// Ушли со страницы — сразу отправляем несохранённое; вернулись — подтягиваем свежее
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) render();
+  if (document.hidden) {
+    if (pushTimer) push();
+  } else {
+    render();
+    pull();
+  }
 });
+window.addEventListener('online', pull);
 
+// ===== Старт =====
 render();
+setStatus(syncStatus);
+if (sync) {
+  pull();
+} else if (!localStorage.getItem(PROMPT_KEY)) {
+  localStorage.setItem(PROMPT_KEY, '1');
+  openSyncDialog();
+}
 </script>
 </body>
 </html>
