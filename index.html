@@ -18,6 +18,7 @@
     --home: #e64980;
     --morning: #94d82d;
     --evening: #4dabf7;
+    --shoulders: #ffa94d;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
@@ -35,8 +36,14 @@
   .sync-status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--tone, #8b93a7); }
 
   /* Карточки серий */
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; align-items: start; margin-bottom: 20px; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--c); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  /* Карточка — subgrid из 5 строк: шапка, прогресс, урок, кнопки, список.
+     Так в одном ряду совпадают и высоты карточек, и положение кнопок. */
+  .card { background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--c); border-radius: 14px; padding: 16px; display: grid; grid-template-rows: subgrid; grid-row: span 5; row-gap: 14px; }
+  @supports not (grid-template-rows: subgrid) {
+    .card { display: flex; flex-direction: column; gap: 14px; }
+    .card .actions { margin-top: auto; }
+  }
   .card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
   .card-author { color: var(--muted); font-size: 13px; }
   .progress { height: 6px; background: var(--panel-2); border-radius: 3px; overflow: hidden; }
@@ -45,6 +52,7 @@
   .next-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
   .next-title { font-size: 19px; font-weight: 650; margin-top: 2px; }
   .next-meta { font-size: 14px; color: var(--muted); }
+  .next-note { font-size: 14px; margin-top: 6px; padding: 8px 10px; border-left: 3px solid var(--c); background: var(--panel-2); border-radius: 0 8px 8px 0; }
   .actions { display: flex; gap: 8px; }
   .btn { flex: 1; min-height: 48px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; color: var(--text); font-weight: 600; }
   .btn-primary { background: var(--c); border-color: var(--c); color: var(--bg); }
@@ -64,7 +72,7 @@
   .lesson-title { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .lesson.is-next .lesson-title { font-weight: 700; }
   .lesson.done .lesson-title { color: var(--muted); }
-  .lesson-meta { font-size: 12px; color: var(--muted); }
+  .lesson-meta { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .play { flex: none; width: 38px; height: 38px; border-radius: 8px; border: 1px solid var(--line); display: grid; place-items: center; color: var(--muted); text-decoration: none; font-size: 13px; }
 
   /* Сетка привычек */
@@ -152,7 +160,10 @@
 <dialog id="sync-dialog"></dialog>
 
 <script>
-// ===== Данные: [id видео, номер дня (null = бонус), название, длительность] =====
+// ===== Данные =====
+// Урок: [ключ, номер дня (null = бонус), название, длительность, ссылка, заметка]
+// Ссылка: YouTube ID (можно с &t=секунды) или полный адрес страницы.
+// Если ссылки нет, ключ и есть YouTube ID.
 const SERIES = [
   { id: 'home', name: 'HOME', author: 'Yoga With Adriene', color: 'var(--home)', lessons: [
     ['KWBfQjuwp4E', 0, 'Welcome Home', '6:08'],
@@ -255,10 +266,47 @@ const SERIES = [
     ['duyd-RJeqcU', 30, 'Расслабляющий инь', '19:20'],
     ['0ItYBQK2yHw', null, 'Медитация с аффирмациями', '7:21'],
   ]},
+  { id: 'shoulders', name: 'Лопатки', author: 'Марафон на 30 дней', color: 'var(--shoulders)', dayWord: 'День', lessons: [
+    // Неделя 1. Разгрузить запястья, найти лопатки
+    ['lop-01', 1, 'A · Осанка стоя', '12:00', 'aPd06RUKDsE', 'Плюс тест: попроси снять тебя со спины в собаке и тейблтопе, по 10 секунд'],
+    ['lop-02', 2, 'B · Подвижность плеч', '10:00', 'QPjIbr_sSCk'],
+    ['lop-03', 3, 'C · Шея и верх спины', '10:38', 'X3-gKPNyrTA'],
+    ['lop-04', 4, 'D · Урок про запястья', null, 'RGEWpPHu69A', 'Смотри как разбор, вес на руки — по самочувствию'],
+    ['lop-05', 5, 'A · Осанка стоя', '12:00', 'aPd06RUKDsE'],
+    ['lop-06', 6, 'G · Лёжа на животе (DAREBEE)', '10:00', 'https://www.darebee.com/challenges/back-and-shoulders-challenge.html', '2 подхода, маленькая амплитуда'],
+    ['lop-07', 7, 'C · Шея и верх спины', '10:38', 'X3-gKPNyrTA', 'Лёгкий день'],
+    // Неделя 2. Включаем лопатки
+    ['lop-08', 8, 'E · Ролл и резинка', '10:00', 'SYr6lbx68n8', 'Отжимания с протракцией — у стены'],
+    ['lop-09', 9, 'G · Лёжа на животе (DAREBEE)', '10:00', 'https://www.darebee.com/challenges/back-and-shoulders-challenge.html', '3 подхода'],
+    ['lop-10', 10, 'B · Подвижность плеч', '10:00', 'QPjIbr_sSCk'],
+    ['lop-11', 11, 'F · Стабильные лопатки', '16:00', 'estt19oITfw', 'Первый раз посмотри объяснение целиком. Четвереньки — на предплечьях, если запястье отзывается'],
+    ['lop-12', 12, 'A · Осанка стоя', '12:00', 'aPd06RUKDsE'],
+    ['lop-13', 13, 'E · Ролл и резинка', '10:00', 'SYr6lbx68n8', 'Отжимания с протракцией — у стены'],
+    ['lop-14', 14, 'G · Лёжа на животе (DAREBEE)', '10:00', 'https://www.darebee.com/challenges/back-and-shoulders-challenge.html', '3 подхода, чуть больше повторов'],
+    // Неделя 3. Сила
+    ['lop-15', 15, 'F · Стабильные лопатки', '13:00', 'estt19oITfw&t=215', 'Видео откроется сразу на упражнениях. На ладонях, если запястье спокойно'],
+    ['lop-16', 16, 'G · Лёжа на животе (DAREBEE)', '10:00', 'https://www.darebee.com/challenges/back-and-shoulders-challenge.html', 'С бутылками или лёгкими гантелями'],
+    ['lop-17', 17, 'E · Ролл и резинка', '10:00', 'SYr6lbx68n8', 'Отжимания с протракцией — на коленях на полу'],
+    ['lop-18', 18, 'B · Подвижность плеч', '10:00', 'QPjIbr_sSCk'],
+    ['lop-19', 19, 'F · Стабильные лопатки', '13:00', 'estt19oITfw&t=215'],
+    ['lop-20', 20, 'G · Лёжа на животе (DAREBEE)', '10:00', 'https://www.darebee.com/challenges/back-and-shoulders-challenge.html', 'С бутылками или лёгкими гантелями'],
+    ['lop-21', 21, 'E · Ролл и резинка', '10:00', 'SYr6lbx68n8', 'Резинка потуже'],
+    // Неделя 4 и финал. Переносим в йогу
+    ['lop-22', 22, 'D · Урок про запястья', null, 'RGEWpPHu69A', 'Второй раз — теперь применяй в позах'],
+    ['lop-23', 23, 'E · Ролл и резинка', '10:00', 'SYr6lbx68n8', 'Отжимания с протракцией из планки, если получается'],
+    ['lop-24', 24, 'F · Стабильные лопатки', '13:00', 'estt19oITfw&t=215'],
+    ['lop-25', 25, 'H · Силовая йога', '13:00', '7agiIk9KgyI', 'Планку и собаку можно на коленях и с согнутыми ногами. «Отталкиваю пол, подмышки смотрят друг на друга»'],
+    ['lop-26', 26, 'G · Лёжа на животе (DAREBEE)', '10:00', 'https://www.darebee.com/challenges/back-and-shoulders-challenge.html'],
+    ['lop-27', 27, 'B · Подвижность плеч', '10:00', 'QPjIbr_sSCk'],
+    ['lop-28', 28, '★ · Йога для осанки', '25:00', 'eQeNhnAHXP4', 'Если нет времени — вместо неё C (шея и верх спины)'],
+    ['lop-29', 29, 'F · Стабильные лопатки', '13:00', 'estt19oITfw&t=215'],
+    ['lop-30', 30, 'H · Силовая йога', '13:00', '7agiIk9KgyI', 'Потом повтори тест из дня 1 и сравни видео'],
+  ]},
 ];
 
 // Стартовое состояние: HOME Day 0 и Day 1 уже пройдены (без даты)
-const DEFAULT_STATE = { updatedAt: 0, done: { 'KWBfQjuwp4E': null, '--jhKVdZOJM': null } };
+// used: { id серии: время последнего использования } — для порядка карточек
+const DEFAULT_STATE = { updatedAt: 0, done: { 'KWBfQjuwp4E': null, '--jhKVdZOJM': null }, used: {} };
 const STORAGE_KEY = 'yoga-tracker-v1';
 const SYNC_KEY = 'yoga-sync-v1';
 const PROMPT_KEY = 'yoga-sync-prompted';
@@ -267,7 +315,8 @@ const WEEKDAYS = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
 const isAndroid = /Android/i.test(navigator.userAgent);
 
 SERIES.forEach(s => {
-  s.lessons = s.lessons.map(([id, day, title, dur]) => ({ id, day, title, dur, series: s }));
+  s.lessons = s.lessons.map(([id, day, title, dur, link, note]) =>
+    ({ id, day, title, dur, link: link || id, note: note || '', series: s }));
 });
 const SERIES_BY_ID = Object.fromEntries(SERIES.map(s => [s.id, s]));
 const LESSONS = new Map(SERIES.flatMap(s => s.lessons.map(l => [l.id, l])));
@@ -279,7 +328,7 @@ function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (saved && typeof saved.done === 'object' && saved.done !== null) {
-      return { updatedAt: saved.updatedAt || 0, done: saved.done };
+      return { updatedAt: saved.updatedAt || 0, done: saved.done, used: saved.used || {} };
     }
   } catch (e) {}
   return JSON.parse(JSON.stringify(DEFAULT_STATE));
@@ -293,8 +342,8 @@ const pad = n => String(n).padStart(2, '0');
 const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const parseYmd = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
 const todayStr = () => ymd(new Date());
-const durMin = s => s.split(':').map(Number).reduce((acc, n) => acc * 60 + n, 0) / 60;
-const fmtMin = s => `${Math.round(durMin(s))} мин`;
+const durMin = s => (s ? s.split(':').map(Number).reduce((acc, n) => acc * 60 + n, 0) / 60 : 0);
+const fmtMin = s => (s ? `${Math.round(durMin(s))} мин` : '');
 const fmtShort = s => new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'short' }).format(parseYmd(s));
 const fmtTime = d => new Intl.DateTimeFormat('ru', { hour: '2-digit', minute: '2-digit' }).format(d);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -307,7 +356,7 @@ const plural = (n, forms) => {
   return forms[2];
 };
 
-const lessonLabel = l => (l.day === null ? 'Бонус' : `Day ${l.day}`);
+const lessonLabel = l => (l.day === null ? 'Бонус' : `${l.series.dayWord || 'Day'} ${l.day}`);
 const isDone = id => Object.prototype.hasOwnProperty.call(state.done, id);
 const mainLessons = s => s.lessons.filter(l => l.day !== null);
 const nextOf = s => mainLessons(s).find(l => !isDone(l.id));
@@ -320,6 +369,13 @@ function videoUrl(id) {
   return `intent://www.youtube.com/watch?v=${id}#Intent;scheme=https;package=com.google.android.youtube;S.browser_fallback_url=${encodeURIComponent(web)};end`;
 }
 
+// Атрибуты ссылки на урок: YouTube — в приложении, остальное — в новой вкладке
+function linkAttrs(l) {
+  const external = /^https?:/.test(l.link);
+  const href = external ? l.link : videoUrl(l.link);
+  return `href="${esc(href)}"${external ? ' target="_blank" rel="noopener"' : ''}`;
+}
+
 // Любое изменение: штамп времени, сохранение, перерисовка, отправка в облако
 function commit() {
   state.updatedAt = Date.now();
@@ -330,17 +386,37 @@ function commit() {
 
 // Меняет отметку и возвращает функцию отмены
 function setDone(id, value) {
+  const seriesId = LESSONS.get(id).series.id;
   const had = isDone(id);
   const prev = state.done[id];
+  const prevUsed = state.used[seriesId];
   if (value === undefined) delete state.done[id];
-  else state.done[id] = value;
+  else { state.done[id] = value; state.used[seriesId] = Date.now(); }
   commit();
   return () => {
     if (had) state.done[id] = prev;
     else delete state.done[id];
+    if (prevUsed === undefined) delete state.used[seriesId];
+    else state.used[seriesId] = prevUsed;
     commit();
   };
 }
+
+// Порядок карточек: сначала серии, которыми пользовались последними.
+// Считается только при открытии страницы, чтобы карточки не прыгали под пальцем.
+function computeOrder() {
+  const score = s => {
+    if (state.used[s.id]) return state.used[s.id];
+    // Для старых отметок без времени — по дате последнего урока
+    const dates = s.lessons.map(l => state.done[l.id]).filter(Boolean).sort();
+    return dates.length ? parseYmd(dates[dates.length - 1]).getTime() : 0;
+  };
+  return SERIES
+    .map((s, i) => ({ s, i, score: score(s) }))
+    .sort((a, b) => b.score - a.score || a.i - b.i)
+    .map(x => x.s);
+}
+let cardOrder = SERIES;
 
 // ===== Синхронизация с GitHub Gist =====
 const STATUS = {
@@ -401,7 +477,8 @@ async function gh(path, { method = 'GET', body, token } = {}) {
   return res.json();
 }
 
-const serialize = () => JSON.stringify({ updatedAt: state.updatedAt, done: state.done }, null, 2);
+const serialize = () => JSON.stringify({ updatedAt: state.updatedAt, done: state.done, used: state.used }, null, 2);
+let firstPull = true; // при первом обновлении из облака пересчитываем порядок карточек
 
 function handleSyncError(err) {
   if (err.status === 401 || err.status === 403) { setStatus('auth'); return; }
@@ -451,8 +528,9 @@ async function pull() {
 
     if (remote && typeof remote.done === 'object' && remoteAt > state.updatedAt) {
       // В облаке версия новее — берём её
-      state = { updatedAt: remoteAt, done: remote.done };
+      state = { updatedAt: remoteAt, done: remote.done, used: remote.used || {} };
       saveState();
+      if (firstPull) cardOrder = computeOrder();
       render();
       setStatus('ok');
     } else if (!remote || state.updatedAt > remoteAt) {
@@ -461,6 +539,7 @@ async function pull() {
     } else {
       setStatus('ok');
     }
+    firstPull = false;
   } catch (err) {
     handleSyncError(err);
   }
@@ -570,7 +649,7 @@ function renderCards() {
     scrolls[d.dataset.series] = d.querySelector('.lessons').scrollTop;
   });
 
-  cardsEl.innerHTML = SERIES.map(s => {
+  cardsEl.innerHTML = cardOrder.map(s => {
     const main = mainLessons(s);
     const doneCount = main.filter(l => isDone(l.id)).length;
     const next = nextOf(s);
@@ -579,27 +658,29 @@ function renderCards() {
     const nextBlock = next ? `
       <div>
         <div class="next-label">Следующий урок</div>
-        <div class="next-title">Day ${next.day} · ${esc(next.title)}</div>
-        <div class="next-meta">${fmtMin(next.dur)}</div>
+        <div class="next-title">${lessonLabel(next)} · ${esc(next.title)}</div>
+        ${next.dur ? `<div class="next-meta">${fmtMin(next.dur)}</div>` : ''}
+        ${next.note ? `<div class="next-note">${esc(next.note)}</div>` : ''}
       </div>
       <div class="actions">
-        <a class="btn btn-primary" href="${videoUrl(next.id)}">▶ Начать</a>
+        <a class="btn btn-primary" ${linkAttrs(next)} data-action="start" data-series="${s.id}">▶ Начать</a>
         <button class="btn" data-action="done-next" data-series="${s.id}">✓ Сделала</button>
-      </div>` : `<div class="next-title">Серия пройдена</div>`;
+      </div>` : `<div class="next-title">Серия пройдена</div><div></div>`;
 
     const list = s.lessons.map(l => {
       const done = isDone(l.id);
       const date = state.done[l.id];
       const meta = [fmtMin(l.dur)];
       if (done) meta.push(date ? `✓ ${fmtShort(date)}` : '✓ раньше');
+      if (l.note) meta.push(l.note);
       return `
         <li class="lesson ${done ? 'done' : ''} ${next && l.id === next.id ? 'is-next' : ''}">
           <button class="check" data-action="toggle-lesson" data-id="${l.id}" aria-label="${done ? 'Снять отметку' : 'Отметить'}">${done ? '✓' : ''}</button>
           <div class="lesson-body">
             <div class="lesson-title">${lessonLabel(l)} · ${esc(l.title)}</div>
-            <div class="lesson-meta">${meta.join(' · ')}</div>
+            <div class="lesson-meta">${esc(meta.filter(Boolean).join(' · '))}</div>
           </div>
-          <a class="play" href="${videoUrl(l.id)}" aria-label="Открыть на YouTube">▶</a>
+          <a class="play" ${linkAttrs(l)} aria-label="Открыть урок">▶</a>
         </li>`;
     }).join('');
 
@@ -756,7 +837,7 @@ document.addEventListener('click', e => {
     const next = nextOf(s);
     if (!next) return;
     const undo = setDone(next.id, todayStr());
-    toast(`${s.name} · Day ${next.day} — отмечено`, undo);
+    toast(`${s.name} · ${lessonLabel(next)} — отмечено`, undo);
   }
 
   if (action === 'toggle-lesson') {
@@ -782,8 +863,16 @@ document.addEventListener('click', e => {
       const next = nextOf(s);
       if (!next) { toast(`${s.name}: серия уже пройдена`); return; }
       const undo = setDone(next.id, date);
-      toast(`${s.name} · Day ${next.day} — ${fmtShort(date)}`, undo);
+      toast(`${s.name} · ${lessonLabel(next)} — ${fmtShort(date)}`, undo);
     }
+  }
+
+  if (action === 'start') {
+    // Нажатие «Начать» — тоже использование серии. Без перерисовки: страница уходит в YouTube
+    state.used[el.dataset.series] = Date.now();
+    state.updatedAt = Date.now();
+    saveState();
+    schedulePush();
   }
 
   if (action === 'prev') shiftPeriod(-1);
@@ -816,6 +905,7 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('online', pull);
 
 // ===== Старт =====
+cardOrder = computeOrder();
 render();
 setStatus(syncStatus);
 if (sync) {
