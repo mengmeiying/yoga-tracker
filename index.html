@@ -191,11 +191,10 @@
 //   soft      — мягкая практика: растяжка, инь, минуты идут в кольцо «Мягкая практика»
 //   …+str     — ещё и силовой: день засчитывается в кольцо «Сила» (норма ВОЗ 2 дня)
 // Вступления (день 0) и медитации в кольца не идут.
+// Сейчас: вечерний марафон — мягкая практика, все остальные серии — нагрузка + сила.
 const SERIES = [
   { id: 'home', name: 'HOME', author: 'Yoga With Adriene', color: 'var(--home)',
-    kind: 'load',
-    kinds: { 4: 'load+str', 5: 'soft', 6: 'load+str', 7: 'soft', 8: 'soft', 12: 'soft', 15: 'soft',
-             16: 'soft', 20: 'soft', 21: 'load+str', 25: 'soft', 28: 'soft' },
+    kind: 'load+str',
     lessons: [
     ['KWBfQjuwp4E', 0, 'Welcome Home', '6:08'],
     ['--jhKVdZOJM', 1, 'Recognize', '43:11'],
@@ -230,9 +229,7 @@ const SERIES = [
     ['4VSqbSCcvuU', 30, 'Journey', '41:50'],
   ]},
   { id: 'morning', name: 'Утро', author: 'Yoga with Kassandra', color: 'var(--morning)',
-    kind: 'soft',
-    kinds: { 5: 'load', 6: 'load', 9: 'load', 11: 'load', 13: 'load', 15: 'load', 17: 'load+str',
-             20: 'load', 25: 'load+str', 26: 'load', 28: 'load', 30: 'load' },
+    kind: 'load+str',
     lessons: [
     ['NeEMs38YaBY', 0, 'Вступление', '6:02'],
     ['JyaM87ecKd0', 1, 'Для начинающих', '13:41'],
@@ -304,11 +301,7 @@ const SERIES = [
     ['0ItYBQK2yHw', null, 'Медитация с аффирмациями', '7:21'],
   ]},
   { id: 'shoulders', name: 'Лопатки', author: 'Марафон на 30 дней', color: 'var(--shoulders)', dayWord: 'День',
-    // A, B, C, D, ★ — мягкие; E, F, G — силовые на плечевой пояс; H — силовая йога
-    kind: 'soft',
-    kinds: { 6: 'soft+str', 8: 'soft+str', 9: 'soft+str', 11: 'soft+str', 13: 'soft+str', 14: 'soft+str',
-             15: 'soft+str', 16: 'soft+str', 17: 'soft+str', 19: 'soft+str', 20: 'soft+str', 21: 'soft+str',
-             23: 'soft+str', 24: 'soft+str', 25: 'load+str', 26: 'soft+str', 29: 'soft+str', 30: 'load+str' },
+    kind: 'load+str',
     lessons: [
     // Неделя 1. Разгрузить запястья, найти лопатки
     ['lop-01', 1, 'A · Осанка стоя', '12:00', 'aPd06RUKDsE', 'Плюс тест: попроси снять тебя со спины в собаке и тейблтопе, по 10 секунд'],
