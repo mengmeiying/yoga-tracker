@@ -19,6 +19,9 @@
     --morning: #94d82d;
     --evening: #4dabf7;
     --shoulders: #ffa94d;
+    --ring-load: #ff6b6b;
+    --ring-str: #ffd43b;
+    --ring-soft: #63e6be;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
@@ -74,6 +77,22 @@
   .lesson.done .lesson-title { color: var(--muted); }
   .lesson-meta { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .play { flex: none; width: 38px; height: 38px; border-radius: 8px; border: 1px solid var(--line); display: grid; place-items: center; color: var(--muted); text-decoration: none; font-size: 13px; }
+
+  /* Кольца недели */
+  .week { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+  .week-rings { flex: none; margin: 0 auto; }
+  .week-body { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: 12px; }
+  .week-title { font-size: 13px; color: var(--muted); }
+  .ring-row { display: flex; gap: 10px; align-items: flex-start; }
+  .ring-row .swatch { margin-top: 7px; width: 10px; height: 10px; }
+  .ring-value { font-size: 16px; font-weight: 600; }
+  .ring-sub { font-size: 13px; color: var(--muted); }
+  .week-bars { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; align-items: end; max-width: 420px; }
+  .week-bar { display: flex; flex-direction: column; justify-content: flex-end; height: 48px; border-radius: 3px; overflow: hidden; background: var(--panel-2); }
+  .week-bar i { display: block; }
+  .week-day { display: flex; justify-content: center; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .week-day.is-today { color: #fff; font-weight: 700; }
+  .week-day .str { width: 6px; height: 6px; border-radius: 50%; background: var(--ring-str); }
 
   /* Сетка привычек */
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; overflow-x: auto; }
@@ -139,6 +158,8 @@
 
   <section class="cards" id="cards"></section>
 
+  <section class="panel week" id="week"></section>
+
   <section class="panel">
     <div class="panel-head">
       <h2 id="period-title"></h2>
@@ -164,8 +185,18 @@
 // Урок: [ключ, номер дня (null = бонус), название, длительность, ссылка, заметка]
 // Ссылка: YouTube ID (можно с &t=секунды) или полный адрес страницы.
 // Если ссылки нет, ключ и есть YouTube ID.
+//
+// Тип урока для колец недели (kind — по умолчанию для серии, kinds — исключения по номеру дня):
+//   load      — нагрузка: флоу, динамика, минуты идут в кольцо «Нагрузка» (норма ВОЗ 150 мин)
+//   soft      — мягкая практика: растяжка, инь, минуты идут в кольцо «Мягкая практика»
+//   …+str     — ещё и силовой: день засчитывается в кольцо «Сила» (норма ВОЗ 2 дня)
+// Вступления (день 0) и медитации в кольца не идут.
 const SERIES = [
-  { id: 'home', name: 'HOME', author: 'Yoga With Adriene', color: 'var(--home)', lessons: [
+  { id: 'home', name: 'HOME', author: 'Yoga With Adriene', color: 'var(--home)',
+    kind: 'load',
+    kinds: { 4: 'load+str', 5: 'soft', 6: 'load+str', 7: 'soft', 8: 'soft', 12: 'soft', 15: 'soft',
+             16: 'soft', 20: 'soft', 21: 'load+str', 25: 'soft', 28: 'soft' },
+    lessons: [
     ['KWBfQjuwp4E', 0, 'Welcome Home', '6:08'],
     ['--jhKVdZOJM', 1, 'Recognize', '43:11'],
     ['UcZ3O1e0ejA', 2, 'Intend', '28:16'],
@@ -198,7 +229,11 @@ const SERIES = [
     ['xAc-c7-suRc', 29, 'Intuit', '26:18'],
     ['4VSqbSCcvuU', 30, 'Journey', '41:50'],
   ]},
-  { id: 'morning', name: 'Утро', author: 'Yoga with Kassandra', color: 'var(--morning)', lessons: [
+  { id: 'morning', name: 'Утро', author: 'Yoga with Kassandra', color: 'var(--morning)',
+    kind: 'soft',
+    kinds: { 5: 'load', 6: 'load', 9: 'load', 11: 'load', 13: 'load', 15: 'load', 17: 'load+str',
+             20: 'load', 25: 'load+str', 26: 'load', 28: 'load', 30: 'load' },
+    lessons: [
     ['NeEMs38YaBY', 0, 'Вступление', '6:02'],
     ['JyaM87ecKd0', 1, 'Для начинающих', '13:41'],
     ['BwlSjg6ESdc', 2, 'Проснуться, всё тело', '12:38'],
@@ -232,7 +267,9 @@ const SERIES = [
     ['VJOILX6pjgE', 30, 'Средний уровень, всё тело', '14:54'],
     ['ZizK2yBnncM', null, 'Медитация с аффирмациями', '7:41'],
   ]},
-  { id: 'evening', name: 'Вечер', author: 'Yoga with Kassandra', color: 'var(--evening)', lessons: [
+  { id: 'evening', name: 'Вечер', author: 'Yoga with Kassandra', color: 'var(--evening)',
+    kind: 'soft',
+    lessons: [
     ['hyFB2QRgXwE', 0, 'Вступление', '6:40'],
     ['P295KQMmkh8', 1, 'Гибкость и расслабление', '17:03'],
     ['rD3B5q9FMH0', 2, 'Инь для начинающих', '18:56'],
@@ -266,7 +303,13 @@ const SERIES = [
     ['duyd-RJeqcU', 30, 'Расслабляющий инь', '19:20'],
     ['0ItYBQK2yHw', null, 'Медитация с аффирмациями', '7:21'],
   ]},
-  { id: 'shoulders', name: 'Лопатки', author: 'Марафон на 30 дней', color: 'var(--shoulders)', dayWord: 'День', lessons: [
+  { id: 'shoulders', name: 'Лопатки', author: 'Марафон на 30 дней', color: 'var(--shoulders)', dayWord: 'День',
+    // A, B, C, D, ★ — мягкие; E, F, G — силовые на плечевой пояс; H — силовая йога
+    kind: 'soft',
+    kinds: { 6: 'soft+str', 8: 'soft+str', 9: 'soft+str', 11: 'soft+str', 13: 'soft+str', 14: 'soft+str',
+             15: 'soft+str', 16: 'soft+str', 17: 'soft+str', 19: 'soft+str', 20: 'soft+str', 21: 'soft+str',
+             23: 'soft+str', 24: 'soft+str', 25: 'load+str', 26: 'soft+str', 29: 'soft+str', 30: 'load+str' },
+    lessons: [
     // Неделя 1. Разгрузить запястья, найти лопатки
     ['lop-01', 1, 'A · Осанка стоя', '12:00', 'aPd06RUKDsE', 'Плюс тест: попроси снять тебя со спины в собаке и тейблтопе, по 10 секунд'],
     ['lop-02', 2, 'B · Подвижность плеч', '10:00', 'QPjIbr_sSCk'],
@@ -315,8 +358,14 @@ const WEEKDAYS = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
 const isAndroid = /Android/i.test(navigator.userAgent);
 
 SERIES.forEach(s => {
-  s.lessons = s.lessons.map(([id, day, title, dur, link, note]) =>
-    ({ id, day, title, dur, link: link || id, note: note || '', series: s }));
+  s.lessons = s.lessons.map(([id, day, title, dur, link, note]) => {
+    const kind = (day === null || day === 0) ? null : ((s.kinds && s.kinds[day]) || s.kind || null);
+    return {
+      id, day, title, dur, link: link || id, note: note || '', series: s,
+      bucket: kind ? kind.split('+')[0] : null,   // 'load' | 'soft' | null
+      strength: !!kind && kind.includes('+str'),
+    };
+  });
 });
 const SERIES_BY_ID = Object.fromEntries(SERIES.map(s => [s.id, s]));
 const LESSONS = new Map(SERIES.flatMap(s => s.lessons.map(l => [l.id, l])));
@@ -818,11 +867,106 @@ function renderGrid() {
     <div class="stat"><div class="stat-value">${top[1] > 0 ? top[0].name : '—'}</div><div class="stat-label">чаще всего</div></div>`;
 }
 
+// ===== Кольца недели (пн–вс) =====
+// Нагрузка и сила — по рекомендациям ВОЗ, мягкая практика — своя цель
+const GOALS = { load: 150, strength: 2, soft: 60 };
+const weekEl = document.getElementById('week');
+
+function currentWeek() {
+  const t = new Date();
+  const monday = t.getDate() - ((t.getDay() + 6) % 7);
+  return Array.from({ length: 7 }, (_, i) => new Date(t.getFullYear(), t.getMonth(), monday + i));
+}
+
+function ringSvg(rings) {
+  const size = 172, c = size / 2, width = 14;
+  const arcs = rings.map(({ r, value, goal, color }) => {
+    const len = 2 * Math.PI * r;
+    const pct = goal ? value / goal : 0;
+    const arc = (p, stroke) => p > 0
+      ? `<circle cx="${c}" cy="${c}" r="${r}" style="stroke:${stroke}" stroke-dasharray="${(Math.min(p, 1) * len).toFixed(1)} ${len.toFixed(1)}"/>`
+      : '';
+    return `
+      <circle cx="${c}" cy="${c}" r="${r}" style="stroke:color-mix(in srgb, ${color} 18%, var(--panel))"/>
+      ${arc(pct, color)}
+      ${pct > 1 ? arc(pct - 1, `color-mix(in srgb, ${color} 60%, #fff)`) : ''}`;
+  }).join('');
+  return `<svg class="week-rings" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true">
+    <g transform="rotate(-90 ${c} ${c})" fill="none" stroke-width="${width}" stroke-linecap="round">${arcs}</g>
+  </svg>`;
+}
+
+function renderWeek() {
+  const days = currentWeek();
+  const ds = days.map(ymd);
+  const today = todayStr();
+  const per = ds.map(() => ({ load: 0, soft: 0, str: false }));
+
+  for (const l of LESSONS.values()) {
+    const i = ds.indexOf(state.done[l.id]);
+    if (i < 0 || !l.bucket) continue;
+    per[i][l.bucket] += durMin(l.dur);
+    if (l.strength) per[i].str = true;
+  }
+
+  const load = Math.round(per.reduce((a, p) => a + p.load, 0));
+  const soft = Math.round(per.reduce((a, p) => a + p.soft, 0));
+  const strDays = per.filter(p => p.str).length;
+
+  const f = new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'long' });
+  const [first, last] = [days[0], days[6]];
+  const period = first.getMonth() === last.getMonth()
+    ? `${first.getDate()}–${f.format(last)}`
+    : `${f.format(first)} – ${f.format(last)}`;
+
+  const left = (value, goal, unit) => value >= goal ? 'норма выполнена' : `осталось ${goal - value} ${unit}`;
+  const minWord = n => plural(n, ['минута', 'минуты', 'минут']);
+
+  const maxDay = Math.max(30, ...per.map(p => p.load + p.soft));
+  const bars = per.map((p, i) => `
+    <div>
+      <div class="week-bar">
+        <i style="height:${p.soft / maxDay * 100}%; background:var(--ring-soft)"></i>
+        <i style="height:${p.load / maxDay * 100}%; background:var(--ring-load)"></i>
+      </div>
+      <div class="week-day ${ds[i] === today ? 'is-today' : ''}">${WEEKDAYS[days[i].getDay()]}${p.str ? '<span class="str" title="силовой день"></span>' : ''}</div>
+    </div>`).join('');
+
+  weekEl.innerHTML = `
+    ${ringSvg([
+      { r: 72, value: load, goal: GOALS.load, color: 'var(--ring-load)' },
+      { r: 54, value: strDays, goal: GOALS.strength, color: 'var(--ring-str)' },
+      { r: 36, value: soft, goal: GOALS.soft, color: 'var(--ring-soft)' },
+    ])}
+    <div class="week-body">
+      <div class="week-title">Неделя ${period}</div>
+      <div class="ring-row">
+        <span class="swatch" style="background:var(--ring-load)"></span>
+        <div><div class="ring-value">Нагрузка · ${load} из ${GOALS.load} мин</div>
+        <div class="ring-sub">флоу и динамика · ${left(load, GOALS.load, 'мин')}</div></div>
+      </div>
+      <div class="ring-row">
+        <span class="swatch" style="background:var(--ring-str)"></span>
+        <div><div class="ring-value">Сила · ${strDays} из ${GOALS.strength} ${plural(GOALS.strength, ['дня', 'дней', 'дней'])}</div>
+        <div class="ring-sub">силовые уроки · ${left(strDays, GOALS.strength, plural(GOALS.strength - strDays, ['день', 'дня', 'дней']))}</div></div>
+      </div>
+      <div class="ring-row">
+        <span class="swatch" style="background:var(--ring-soft)"></span>
+        <div><div class="ring-value">Мягкая практика · ${soft} из ${GOALS.soft} мин</div>
+        <div class="ring-sub">растяжка и инь · ${left(soft, GOALS.soft, 'мин')}</div></div>
+      </div>
+      <div class="week-bars" aria-label="Минуты по дням">${bars}</div>
+    </div>`;
+  weekEl.setAttribute('aria-label',
+    `Неделя ${period}: нагрузка ${load} ${minWord(load)} из ${GOALS.load}, силовых дней ${strDays} из ${GOALS.strength}, мягкая практика ${soft} из ${GOALS.soft}`);
+}
+
 // ===== Общий рендер =====
 function render() {
   document.getElementById('today').textContent =
     new Intl.DateTimeFormat('ru', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
   renderCards();
+  renderWeek();
   renderGrid();
 }
 
