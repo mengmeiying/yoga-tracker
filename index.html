@@ -19,6 +19,7 @@
     --morning: #94d82d;
     --evening: #4dabf7;
     --shoulders: #ffa94d;
+    --shred: #b197fc;
     --ring-load: #ff6b6b;
     --ring-str: #ffd43b;
     --ring-soft: #63e6be;
@@ -39,10 +40,12 @@
   .sync-status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--tone, #8b93a7); }
 
   /* Карточки серий */
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 12px; margin-bottom: 20px; }
   /* Карточка — subgrid из 5 строк: шапка, прогресс, урок, кнопки, список.
      Так в одном ряду совпадают и высоты карточек, и положение кнопок. */
-  .card { background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--c); border-radius: 14px; padding: 16px; display: grid; grid-template-rows: subgrid; grid-row: span 5; row-gap: 14px; }
+  .card { min-width: 0; background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--c); border-radius: 14px; padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: subgrid; grid-row: span 5; row-gap: 14px; }
+  /* Длинные строки в раскрытом списке не расширяют внутреннюю колонку карточки. */
+  .card > * { min-width: 0; }
   @supports not (grid-template-rows: subgrid) {
     .card { display: flex; flex-direction: column; gap: 14px; }
     .card .actions { margin-top: auto; }
@@ -193,6 +196,24 @@
 // Вступления (день 0) и медитации в кольца не идут.
 // Сейчас: вечерний марафон — мягкая практика, все остальные серии — нагрузка + сила.
 const SERIES = [
+  { id: 'shred', name: 'Стройная фигура за 30 дней', author: 'Джиллиан Майклс',
+    color: 'var(--shred)', dayWord: 'День', kind: 'load+str',
+    // Три видео по десять занятий. У каждого выполнения свой ключ для истории и синхронизации.
+    lessons: Array.from({ length: 30 }, (_, i) => {
+      const day = i + 1;
+      const level = Math.floor(i / 10) + 1;
+      const videos = [
+        ['6adafc7ce4cb6e37736ac669d213cae8', '28:52'],
+        ['0e4c8fbb3d138d644b52a49dbc9d666e', '27:58'],
+        ['a213782565f38480f1b00072806963e2', '29:09'],
+      ];
+      const [video, duration] = videos[level - 1];
+      return [`shred-${String(day).padStart(2, '0')}`, day,
+        `Уровень ${level} · занятие ${i % 10 + 1} из 10`, duration,
+        `https://rutube.ru/video/${video}/`,
+        'RUTUBE · Коврик и гантели. Один уровень повторяется 10 занятий; дни отдыха не пропускают занятия курса.'];
+    }),
+  },
   { id: 'home', name: 'HOME', author: 'Yoga With Adriene', color: 'var(--home)',
     kind: 'load+str',
     lessons: [
